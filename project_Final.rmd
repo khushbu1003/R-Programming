@@ -1,0 +1,269 @@
+---
+title: "Project_Final"
+author: "Khushbu Shah"
+date: "12/1/2020"
+output: word_document
+  
+---
+#PRoject-draft - using economics dataset and researching and making hupothesis from past record and impact.
+
+
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(socviz)
+install.packages('dslabs')
+data("economics")
+
+```
+
+```{r}
+sample_n(economics, 10)
+```
+#personal consumption expenditure (PCE)
+#psavert--personal saving rate
+#Median Weeks Unemployed (UEMPMED)
+```{r}
+
+
+
+p <- ggplot(data = economics, mapping = aes(x = date , y = unemploy))
+
+p  + geom_point()
+
+```
+#note that Unemply rate was the highest in 2
+
+
+```{r}
+
+
+
+p <- ggplot(data = economics, mapping = aes(x = date , y = psavert))
+
+p  + geom_point()
+
+```
+#saving rate is the lowest in 2010, looks reasonable.
+
+```{r}
+economics
+by_pop <- economics %>% group_by(pop)
+by_pop
+summarize(by_pop,  mean_unemploy = mean(unemploy, na.rm = TRUE) )
+```
+
+```{r}
+# For unemploy, plot a bar chart of proportions
+# To not mix up with another variable in the data, we use ..prop..
+
+ggplot(data = economics, mapping = aes( x = unemploy, fill = unemploy)) +
+  geom_bar( aes( y = ..prop..)) 
+
+```
+```{r}
+ggplot(data = economics, mapping = aes( x = uempmed, fill = uempmed)) +
+  geom_bar() + guides(fill = FALSE)
+
+```
+
+
+
+
+#Frequency Table
+```{r}
+#Freq table for religion
+freq <-  count(economics, psavert)
+freq
+
+```
+
+#many of them saved at 5.3 rate, decent result. 11.7 is the highest, at only one person was able to go between 14.7-17.3 saving rate 
+
+```{r}
+#For the flight data, group by year, month and day
+# then find the mean distance and mean arr_delay.
+# print only a random sample of 7 rows for 7 days
+economics %>%    sample_n(7)   %>%
+  group_by(date) %>% 
+  summarise(mean_uempmed = mean(uempmed, na.rm = TRUE),
+            mean_unemploy = mean(unemploy, na.rm = TRUE)) 
+
+```
+
+
+```{r fig.width= 12, fig.height=9}
+#adjust figure width and height
+ggplot(data = economics, mapping = aes(x= pce, y= psavert)) +
+  geom_point() + geom_smooth(color = "purple", se = FALSE, size = 1, method = "lm") +
+  scale_x_log10(labels = scales::dollar) +
+  labs(x = "Personal Consumption Expenditure (In Dollars)",
+       y = "Personal saving Rate",
+       title = "USA Economy",
+       subtitle = "Expence rate vs Saving rate",
+       caption = "Source: Economics")
+
+```
+
+```{r}
+sample_n(economics, 10)
+
+filter(economics, unemploy>15000)
+
+max(economics$unemploy)
+
+```
+
+```{r}
+ggplot(data = economics) + geom_bar(mapping = aes(x = psavert))
+```
+
+```{r}
+# Fit a simple linear regression model
+library(ISLR)
+library(MASS)
+
+
+```
+
+```{r}
+
+
+mod <- lm(pop ~ pce, data = economics)
+mod
+```
+
+
+```{r}
+#plot the points  medv  vs  lstat  with the linear regression 
+
+ggplot(mod) + 
+  geom_point(mapping = aes(x = pop, y=pce)) + 
+  geom_smooth(aes(x = pop, y=pce),  method = "lm")
+
+
+```
+
+```{r}
+mod1 <- lm(pop ~ pce + psavert, data = economics)
+mod1
+
+```
+
+```{r}
+#Get summary of mod1
+summary(mod1)
+
+```
+```{r}
+names(economics)
+```
+
+```{r}
+
+
+mod2 <- lm(pop ~., data = economics)
+mod2
+summary(mod2)
+```
+```{r}
+#Create a data frame of predictions and residuals.
+#recall that mod3 contains all variables except indus and age
+#Plot a scatterplot.
+
+
+
+
+diagnostics <- data.frame(predictions = mod2$fitted.values, residuals = mod2$residuals)
+
+
+diagnostics %>% 
+  ggplot(aes(x = predictions, y = residuals)) +
+  geom_point()
+
+#Or
+
+  ggplot(data = diagnostics, mapping = aes(x = predictions, y = residuals)) +
+  geom_point()
+
+```
+
+```{r}
+
+
+
+mod_mov2 <- lm(pop ~ pce + psavert, data=economics)
+ 
+mod_mov2
+
+```
+
+```{r}
+#Predict the IMDb rating of a model with a critics score of 70 and audience score of 20. 
+
+predict(mod_mov2, data.frame( pce =1000, psavert=10 )   )
+
+# predict the IMDb_rating for ALL FITTED VALUES
+
+predicted <- predict(mod_mov2)
+predicted[1:4]
+```
+```{r}
+#What is ~. doing?
+
+mod2 <- lm(pce ~., data = economics)
+mod2
+summary(mod2)
+```
+1.  When p-values for individual variables are > than ALPHA (the significance level),
+with ALPHA=ranging from 1% to 10%  then that particular variable has (statisticallY) 
+NO IMPLACT on the value of the dependent variable and should be REMOVED from further analysis.
+
+2.  Also important is the value of the parameter R-squared  (see above).  Better yet - examine the value of the Adjusted-R-squared coefficients.  It tells us how much of the variation of y is due to variation of the variables we used in our analysis..
+
+3.  But always start with examining the p-Value for the global F-test.   
+This value must be very small for the analysis to proceed...
+F-statics is small.
+
+Note that everything seems significant here. so we do not need to take off any elements from the dataset to check again
+
+
+
+
+
+2. For continuous variables:  HISTROGRAMS
+
+```{r}
+#experiment with different binwidth:  0.01,  0.1, 0.2,  etc.
+ggplot(data = economics, aes(x=uempmed))+
+geom_histogram(color="darkblue", fill="lightblue")
+
+
+
+```
+#many people were unemplyed for more than 75 weeks, thats very bad.
+#however, many of them were able to find emplyment after few weaks according to the chart
+```{r}
+#experiment with different binwidth:  0.01,  0.1, 0.2,  etc.
+ggplot(data = economics, aes(x=pce))+
+geom_histogram(color="darkblue", fill="lightblue")
+
+
+
+```
+#note: check the personal expenditure rate - not so many people even reached to the highest point.
+#the highest they could spend was between 0 -20, it shows very low Income and poor economy.
+#most of people were only able to spend 5% 
+
+# Exploratory Analysis with Plots
+```{r}
+plot(economics$unemploy, economics$psavert, type = "p",
+     main = "Unemplyment Vs saving rate",
+     xlab = "Total Unemploy people",
+     ylab = "Their Saving Rate",
+     col  = "orange")
+
+```
+It is so clear to see the relationship between two data type. the lower the emplyment rate, there is no saving
+Higher emplyment rate can result into higher saving rate.
